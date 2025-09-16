@@ -1,0 +1,22 @@
+# Core ML and AI packages
+torch>=2.0.0
+transformers>=4.35.0
+accelerate>=0.24.0
+safetensors>=0.4.0
+sentencepiece>=0.1.99
+tokenizers>=0.15.0
+
+# Web framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+sse-starlette>=1.6.5
+python-multipart>=0.0.6
+
+# Utilities
+pydantic>=2.4.0
+python-json-logger>=2.0.7
+psutil>=5.9.0
+
+# Optional GPU acceleration (will be handled by nix)
+# nvidia-ml-py3>=7.352.0

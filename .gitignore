@@ -1,0 +1,15 @@
+# Ignore all files and directories with "backup" in the name
+*backup*
+
+# Ignore virtual environment folder
+venv/
+
+# Ignore logs directory
+logs/
+
+# Ignore model cache directory
+model_cache/
+
+# Ignore offload cache directory
+offload_cache/
+

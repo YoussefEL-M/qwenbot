@@ -1,0 +1,2303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="icon" href="https://www.semaphor.dk/favicon.ico" />
+    <link rel="stylesheet" href="prism-css.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            height: 100vh;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1e293b;
+        }
+        
+        .dark body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+        }
+        
+        #root {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark .header {
+            background: rgba(30, 41, 59, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo-icon {
+            padding: 0.5rem;
+            background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo-icon svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: white;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #0284c7, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .dark .logo-text p {
+            color: #94a3b8;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .header-btn {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        .dark .header-btn {
+            color: #94a3b8;
+        }
+        
+        .dark .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+        
+        .header-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        /* Main content */
+        .main-content {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+            width: 100%;
+            overflow-y: auto;
+        }
+
+        /* Chat history sidebar */
+        .chat-sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .chat-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .dark .chat-sidebar {
+            background: rgba(30, 41, 59, 0.2);
+            border-right-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dark .sidebar-header {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .dark .sidebar-title {
+            color: #f1f5f9;
+        }
+
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+
+        .dark .sidebar-close {
+            color: #94a3b8;
+        }
+
+        .dark .sidebar-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .chat-history-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            position: relative;
+        }
+
+        .chat-history-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .dark .chat-history-item {
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .dark .chat-history-item:hover {
+            background: rgba(30, 41, 59, 0.5);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .chat-history-item.active {
+            background: rgba(14, 165, 233, 0.2);
+            border-color: rgba(14, 165, 233, 0.5);
+        }
+
+        .dark .chat-history-item.active {
+            background: rgba(14, 165, 233, 0.3);
+        }
+
+        .chat-history-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dark .chat-history-title {
+            color: #f1f5f9;
+        }
+
+        .chat-history-preview {
+            font-size: 0.75rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dark .chat-history-preview {
+            color: #94a3b8;
+        }
+
+        .chat-history-time {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        .dark .chat-history-time {
+            color: #64748b;
+        }
+
+        .chat-delete-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .chat-history-item:hover .chat-delete-btn {
+            opacity: 1;
+        }
+
+        .chat-delete-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .chat-delete-btn svg {
+            width: 0.875rem;
+            height: 0.875rem;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 5rem;
+            left: 1rem;
+            z-index: 200;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        body.sidebar-open .sidebar-toggle {
+            left: 301px;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .dark .sidebar-toggle {
+            background: rgba(30, 41, 59, 0.2);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .dark .sidebar-toggle:hover {
+            background: rgba(30, 41, 59, 0.3);
+        }
+
+        .sidebar-toggle svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #1e293b;
+        }
+
+        .dark .sidebar-toggle svg {
+            color: #f1f5f9;
+        }
+
+        /* Adjust main content when sidebar is open */
+        body.sidebar-open .main-content {
+            margin-left: 300px;
+        }
+
+        body.sidebar-open .header-content {
+            margin-left: 300px;
+        }
+
+        body.sidebar-open .header {
+            margin-left: 300px;
+        }
+        
+        /* Chat interface */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: calc(100vh - 200px);
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 1rem;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.assistant {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            display: flex;
+            max-width: 85%;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .message.user .message-content {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            flex-shrink: 0;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            margin-left: 0.75rem;
+        }
+        
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            margin-right: 0.75rem;
+        }
+        
+        .message-avatar svg {
+            width: 1rem;
+            height: 1rem;
+            color: white;
+        }
+        
+        .message-bubble {
+            position: relative;
+            padding: 1rem;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+        
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border-radius: 1rem 1rem 0.25rem 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message.assistant .message-bubble {
+            background: white;
+            color: #1e293b;
+            border-radius: 1rem 1rem 1rem 0.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .dark .message.assistant .message-bubble {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
+        
+        /* Theme-specific styles */
+        .theme-corporate {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+        
+        .theme-corporate .message.user .message-bubble {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        }
+        
+        .theme-corporate .message.assistant .message-bubble {
+            background: #374151;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+        
+        .theme-corporate .header {
+            background: rgba(31, 41, 55, 0.2);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .theme-corporate .settings-panel {
+            background: #1f2937;
+            color: #f9fafb;
+        }
+        
+        .message-text {
+            margin: 0;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        
+        .message.user .message-text {
+            color: white;
+        }
+        
+        /* Code block styling */
+        .code-block {
+            margin: 1rem 0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-bottom: 1px solid #475569;
+        }
+        
+        .code-language {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .copy-code-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #cbd5e1;
+            cursor: pointer;
+            padding: 0.375rem 0.5rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .copy-code-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #f1f5f9;
+            transform: translateY(-1px);
+        }
+        
+        .code-block pre {
+            margin: 0;
+            padding: 1.25rem;
+            background: #0f172a;
+            overflow-x: auto;
+            position: relative;
+        }
+        
+        .code-block code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+            font-weight: 400;
+        }
+        
+        .inline-code {
+            background: #f1f5f9;
+            color: #1e293b;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .dark .inline-code {
+            background: #334155;
+            color: #f1f5f9;
+        }
+        
+        /* Input area */
+        .input-area {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #1e293b;
+            font-size: 1rem;
+            resize: none;
+            min-height: 3rem;
+            max-height: 8rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .dark .input-field {
+            background: #1e293b;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
+        
+        .input-field:focus {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+        
+        .send-btn {
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .send-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        /* Status indicator */
+        .status-indicator {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            z-index: 1;
+            transition: all 0.3s;
+            max-width: 200px;
+        }
+        
+        .status-connected {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .status-disconnected {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status-loading {
+            background: #fef3c7;
+            color: #d97706;
+            border: 1px solid #fed7aa;
+        }
+        
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .loading {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Settings Modal */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .settings-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .settings-panel {
+            position: relative;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .dark .settings-panel {
+            background: #1e293b;
+            color: #f1f5f9;
+        }
+        
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .dark .settings-header {
+            border-bottom-color: #334155;
+        }
+        
+        .settings-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .settings-close {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .settings-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        .dark .settings-close {
+            color: #94a3b8;
+        }
+        
+        .dark .settings-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+        
+        .settings-close svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .settings-content {
+            padding: 1.5rem;
+        }
+        
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .setting-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .dark .setting-group label {
+            color: #d1d5db;
+        }
+        
+        .setting-group input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background: white;
+            color: #1f2937;
+        }
+        
+        .dark .setting-group input[type="number"] {
+            background: #374151;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+        
+        .setting-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .setting-group input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        
+        .setting-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background: white;
+            color: #1f2937;
+            font-size: 1rem;
+        }
+        
+        .dark .setting-group select {
+            background: #374151;
+            color: #f9fafb;
+            border-color: #4b5563;
+        }
+        
+        .settings-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .dark .settings-footer {
+            border-top-color: #334155;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Notifications */
+        .notification-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .notification {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #0ea5e9;
+            max-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .dark .notification {
+            background: #1e293b;
+            color: #f1f5f9;
+        }
+        
+        .notification.success {
+            border-left-color: #22c55e;
+        }
+        
+        .notification.error {
+            border-left-color: #ef4444;
+        }
+        
+        .notification.warning {
+            border-left-color: #f59e0b;
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+        }
+        
+        .notification-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .notification-message {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .dark .notification-message {
+            color: #9ca3af;
+        }
+        
+        .notification-progress {
+            margin-top: 0.5rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        
+        .dark .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0ea5e9, #0284c7);
+            border-radius: 0.25rem;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 0.25rem;
+        }
+        
+        .dark .progress-text {
+            color: #9ca3af;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem 0.5rem;
+            }
+            
+            .message-content {
+                max-width: 95%;
+            }
+            
+            .header-content {
+                padding: 0.75rem;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.125rem;
+            }
+            
+            .settings-panel {
+                width: 95%;
+                margin: 1rem;
+            }
+            
+            .notification-container {
+                right: 0.5rem;
+                left: 0.5rem;
+            }
+            
+            .notification {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <!-- Sidebar Toggle Button -->
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle chat history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+
+        <!-- Chat History Sidebar -->
+        <div class="chat-sidebar" id="chat-sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Chat History</h2>
+                <button class="sidebar-close" onclick="toggleSidebar()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="sidebar-content" id="sidebar-content">
+                <!-- Chat history items will be populated here -->
+            </div>
+        </div>
+
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-text">
+                        <img src="https://www.semaphor.dk/semaphor/semaphor.nsf/logo.svg" alt="Semaphor Logo" style="width: 150px; height: 150px; margin-top: -3rem; margin-bottom: -4rem;">
+                        <p>Securely and locally run by Semaphor</p>
+                    </div>
+                </div>
+                <div class="header-controls">
+                    <button class="header-btn" onclick="clearChat()" title="New chat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14"/>
+                            <path d="M5 12h14"/>
+                        </svg>
+                    </button>
+                    <button class="header-btn" onclick="showSettings()" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </button>
+                    <button class="header-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
+                        <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/>
+                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="chat-container">
+                <div class="messages-container" id="messages-container">
+                    <div class="message assistant">
+                        <div class="message-content">
+                            <div class="message-avatar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div class="message-bubble">
+                                <p class="message-text">Hello! I'm Chat, your AI assistant. How can I help you today?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <textarea 
+                        class="input-field" 
+                        id="message-input" 
+                        placeholder="Type your message here..."
+                        rows="1"
+                    ></textarea>
+                    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22,2 15,22 11,13 2,9"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="current-model-display" style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; text-align: center;">
+                    🤖 Qwen 2.5 3B
+                </div>
+            </div>
+        </main>
+        
+        <div class="status-indicator" id="status-indicator">
+            Connecting...
+        </div>
+        
+        <!-- Settings Modal -->
+        <div class="settings-modal" id="settings-modal" style="display: none;">
+            <div class="settings-overlay" onclick="hideSettings()"></div>
+            <div class="settings-panel">
+                <div class="settings-header">
+                    <h2>Settings</h2>
+                    <button class="settings-close" onclick="hideSettings()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="settings-content">
+                    <div class="setting-group">
+                        <label>Theme</label>
+                        <select id="theme-select">
+                            <option value="light">☀ Light</option>
+                            <option value="corporate">🌙 Dark</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Font Size</label>
+                        <input type="range" id="font-size" min="12" max="20" step="1" value="16">
+                        <span id="font-size-value">16px</span>
+                    </div>
+                    <div class="setting-group">
+                        <label>Max Tokens</label>
+                        <input type="number" id="max-tokens" value="2048" min="100" max="4096">
+                    </div>
+                    <div class="setting-group">
+                        <label>Top P</label>
+                        <input type="range" id="top-p" min="0" max="1" step="0.1" value="0.9">
+                        <span id="top-p-value">0.9</span>
+                    </div>
+                    <div class="setting-group">
+                        <label>Show Timestamps</label>
+                        <input type="checkbox" id="show-timestamps" checked>
+                    </div>
+                    <div class="setting-group">
+                        <label>Auto-scroll</label>
+                        <input type="checkbox" id="auto-scroll" checked>
+                    </div>
+                </div>
+                <div class="settings-footer">
+                    <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Model Selection Modal -->
+        <div class="settings-modal" id="model-selection-modal" style="display: none;">
+            <div class="settings-overlay" onclick="hideModelSelection()"></div>
+            <div class="settings-panel">
+                <div class="settings-header">
+                    <h2>Choose AI Model</h2>
+                    <button class="settings-close" onclick="hideModelSelection()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="settings-content">
+                    <div class="setting-group">
+                        <label>Select AI Model for New Chat</label>
+                        <select id="new-chat-model-select">
+                            <option value="Qwen/Qwen2.5-0.5B-Instruct">🤖 Qwen 2.5 0.5B (Fastest, 1-2GB VRAM)</option>
+                            <option value="Qwen/Qwen2.5-3B-Instruct">🤖 Qwen 2.5 3B (Fast, 3-4GB VRAM)</option>
+                            <option value="Qwen/Qwen2.5-7B-Instruct">🤖 Qwen 2.5 7B (High Quality, 7-9GB VRAM)</option>
+                            <option value="AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct">🇸🇪 GPT-SW3 6.7B (Multilingual, 7-9GB VRAM)</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                            🔄 Switching models may take 30-60 seconds
+                        </small>
+                    </div>
+                </div>
+                <div class="settings-footer">
+                    <button class="btn-primary" onclick="startNewChatWithModel()">Start New Chat</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notification Container -->
+        <div class="notification-container" id="notification-container"></div>
+    </div>
+
+    <script>
+        // Global state
+        let messages = [];
+        let isConnected = false;
+        let isLoading = false;
+        let ws = null;
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 5;
+        let currentChatId = null;
+        let chatHistory = [];
+        let settings = {
+            theme: 'light',
+            fontSize: 16,
+            maxTokens: 2048,
+            topP: 0.9,
+            showTimestamps: true,
+            autoScroll: true
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            initializeApp();
+            setupEventListeners();
+            connectWebSocket();
+        });
+
+        function initializeApp() {
+            // Load dark mode preference
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark');
+                updateThemeIcon(true);
+            }
+            
+            // Initialize chat history
+            loadChatHistory();
+            updateSidebar();
+            
+            // Generate new chat ID
+            currentChatId = generateChatId();
+            
+            // Load saved messages (legacy support)
+            if (loadMessagesFromStorage()) {
+                displaySavedMessages();
+                // Save to new chat history format
+                saveChatToHistory();
+            }
+            
+            // Auto-resize textarea
+            const textarea = document.getElementById('message-input');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+            });
+            
+            // Handle Enter key
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Add any additional event listeners here
+        }
+
+        function connectWebSocket() {
+            // Use the nginx proxy path like the original
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/qwen/ws/`;
+            
+            console.log('Connecting to WebSocket:', wsUrl);
+            showNotification('Connecting to server...', 'info', 2000);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                isConnected = true;
+                reconnectAttempts = 0;
+                updateStatus('Connected', 'connected');
+                showNotification('✨ Connected successfully!', 'success', 3000);
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
+            };
+            
+            ws.onclose = function(event) {
+                console.log('WebSocket disconnected:', event.code, event.reason);
+                isConnected = false;
+                updateStatus('Disconnected', 'disconnected');
+                showNotification('🔌 Connection lost', 'warning', 3000);
+                
+                // Attempt to reconnect
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                    console.log(`Reconnecting in ${timeout}ms... (attempt ${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+                    showNotification(`🔄 Reconnecting... (${reconnectAttempts + 1}/${maxReconnectAttempts})`, 'info', 2000);
+                    
+                    setTimeout(() => {
+                        reconnectAttempts++;
+                        connectWebSocket();
+                    }, timeout);
+                } else {
+                    showNotification('⚠ Connection failed. Please refresh the page.', 'error', 0);
+                }
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                updateStatus('Connection Error', 'disconnected');
+                showNotification('❌ Connection error. Please check if the server is running.', 'error', 5000);
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'start':
+                    isLoading = true;
+                    updateStatus('AI is thinking...', 'loading');
+                    break;
+                    
+                case 'token':
+                    // Handle streaming response
+                    addStreamingMessage(data.content);
+                    break;
+                    
+                case 'end':
+                    isLoading = false;
+                    finalizeStreamingMessage();
+                    updateStatus('Connected', 'connected');
+                    break;
+                    
+                case 'error':
+                    isLoading = false;
+                    addMessage('assistant', `Error: ${data.content}`);
+                    updateStatus('Connected', 'connected');
+                    break;
+                    
+                default:
+                    console.warn('Unknown message type:', data.type);
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isLoading) return;
+            
+            if (!isConnected) {
+                alert('Not connected to server. Please wait...');
+                return;
+            }
+            
+            // Add user message
+            addMessage('user', message);
+            
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Send to server
+            const payload = {
+                messages: messages,
+                max_tokens: settings.maxTokens,
+                top_p: settings.topP
+            };
+            
+            ws.send(JSON.stringify(payload));
+        }
+
+        function addMessage(role, content) {
+            const message = { role, content, timestamp: new Date().toISOString() };
+            messages.push(message);
+            
+            // Save messages to localStorage (legacy)
+            saveMessagesToStorage();
+            
+            // Save to chat history
+            saveChatToHistory();
+            
+            const messagesContainer = document.getElementById('messages-container');
+            const messageDiv = createMessageElement(message);
+            messagesContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addStreamingMessage(content) {
+            const messagesContainer = document.getElementById('messages-container');
+            let streamingDiv = document.getElementById('streaming-message');
+
+            if (!streamingDiv) {
+                const message = { role: 'assistant', content: '', streaming: true };
+                streamingDiv = createMessageElement(message);
+                streamingDiv.id = 'streaming-message';
+                messagesContainer.appendChild(streamingDiv);
+            }
+
+            const textElement = streamingDiv.querySelector('.message-text');
+
+            // Keep raw text buffer across tokens
+            const currentContent = (textElement.dataset.raw || "") + content;
+            textElement.dataset.raw = currentContent;
+
+            // Format the content with markdown support
+            textElement.innerHTML = formatMarkdownContent(currentContent);
+            
+            // Highlight syntax in code blocks
+            highlightCodeBlocks(textElement);
+
+            if (settings.autoScroll) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        function formatMarkdownContent(content) {
+            let formatted = content;
+            console.log('formatMarkdownContent input:', content.substring(0, 200));
+            
+            // Handle code blocks first (complete ones) - preserve newlines in code
+            formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+                const lang = language || 'text';
+                const codeId = 'code-' + Math.random().toString(36).substr(2, 9);
+                console.log('Found code block:', lang, code.substring(0, 100));
+                return `<div class="code-block">
+                    <div class="code-header">
+                        <span class="code-language">${lang}</span>
+                        <button class="copy-code-btn" onclick="copyCode(this)" title="Copy code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <pre><code id="${codeId}" class="language-${lang}">${escapeHtml(code)}</code></pre>
+                </div>`;
+            });
+            
+            // Handle incomplete/streaming code blocks - preserve newlines in code
+            formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)$/g, (match, language, code) => {
+                // Only apply this if it's not already formatted as a complete block
+                if (!formatted.includes('</div>')) {
+                    const lang = language || 'text';
+                    return `<div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">${lang}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem;">Streaming...</span>
+                        </div>
+                        <pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>
+                    </div>`;
+                }
+                return match;
+            });
+            
+            // Handle headers
+            formatted = formatted.replace(/^### (.+)$/gm, '<h3 style="font-size: 1rem; font-weight: bold; margin: 0.75rem 0 0.5rem 0; color: #1e293b;">$1</h3>');
+            formatted = formatted.replace(/^## (.+)$/gm, '<h2 style="font-size: 1.125rem; font-weight: bold; margin: 1rem 0 0.75rem 0; color: #1e293b;">$1</h2>');
+            formatted = formatted.replace(/^# (.+)$/gm, '<h1 style="font-size: 1.25rem; font-weight: bold; margin: 1.25rem 0 1rem 0; color: #1e293b;">$1</h1>');
+            
+            // Handle bold text
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: bold;">$1</strong>');
+            formatted = formatted.replace(/__(.+?)__/g, '<strong style="font-weight: bold;">$1</strong>');
+            
+            // Handle italic text
+            formatted = formatted.replace(/\*(.+?)\*/g, '<em style="font-style: italic;">$1</em>');
+            formatted = formatted.replace(/_(.+?)_/g, '<em style="font-style: italic;">$1</em>');
+            
+            // Handle inline code (but not if it's inside a code block)
+            if (!formatted.includes('<div class="code-block">')) {
+                formatted = formatted.replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+            } else {
+                // More careful inline code replacement when code blocks are present
+                const parts = formatted.split('<div class="code-block">');
+                if (parts.length > 1) {
+                    // Only apply inline code formatting to parts outside code blocks
+                    parts[0] = parts[0].replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+                    formatted = parts.join('<div class="code-block">');
+                }
+            }
+            
+            // Handle lists
+            formatted = formatted.replace(/^(\d+)\. (.+)$/gm, '<li style="margin: 0.25rem 0; list-style-type: decimal; margin-left: 1rem;">$2</li>');
+            formatted = formatted.replace(/^- (.+)$/gm, '<li style="margin: 0.25rem 0; list-style-type: disc; margin-left: 1rem;">$1</li>');
+            
+            // Wrap consecutive list items in ul/ol tags
+            formatted = formatted.replace(/(<li[^>]*>.*<\/li>(\s*<li[^>]*>.*<\/li>)*)/g, (match) => {
+                if (match.includes('list-style-type: decimal')) {
+                    return `<ol style="margin: 0.5rem 0; padding-left: 0;">${match}</ol>`;
+                } else {
+                    return `<ul style="margin: 0.5rem 0; padding-left: 0;">${match}</ul>`;
+                }
+            });
+            
+            // Handle paragraphs (split by double newlines) - but preserve newlines in code blocks
+            const parts = formatted.split('<div class="code-block">');
+            if (parts.length > 1) {
+                // Process text parts (not code blocks)
+                parts[0] = parts[0].split('\n\n').map(paragraph => {
+                    paragraph = paragraph.trim();
+                    if (paragraph && !paragraph.startsWith('<') && !paragraph.includes('```')) {
+                        return `<p style="margin: 0.5rem 0; line-height: 1.5;">${paragraph}</p>`;
+                    }
+                    return paragraph;
+                }).join('');
+                
+                // Handle single line breaks in text parts only
+                parts[0] = parts[0].replace(/\n(?!<)/g, '<br>');
+                
+                formatted = parts.join('<div class="code-block">');
+            } else {
+                // No code blocks, process normally
+                formatted = formatted.split('\n\n').map(paragraph => {
+                    paragraph = paragraph.trim();
+                    if (paragraph && !paragraph.startsWith('<') && !paragraph.includes('```')) {
+                        return `<p style="margin: 0.5rem 0; line-height: 1.5;">${paragraph}</p>`;
+                    }
+                    return paragraph;
+                }).join('');
+                
+                // Handle single line breaks
+                formatted = formatted.replace(/\n(?!<)/g, '<br>');
+            }
+            
+            return formatted;
+        }
+
+        function highlightCodeBlocks(container) {
+            // Find all code blocks and highlight them
+            const codeBlocks = container.querySelectorAll('code[class*="language-"]');
+            console.log('highlightCodeBlocks: Found', codeBlocks.length, 'code blocks');
+            codeBlocks.forEach(codeBlock => {
+                console.log('Highlighting code block:', codeBlock.className, codeBlock.textContent.substring(0, 50));
+                // Only highlight if Prism is available and not already highlighted
+                if (window.Prism && !codeBlock.classList.contains('prism-highlighted')) {
+                    try {
+                        Prism.highlightElement(codeBlock);
+                        codeBlock.classList.add('prism-highlighted');
+                        console.log('Successfully highlighted code block');
+                    } catch (e) {
+                        console.warn('Failed to highlight code block:', e);
+                    }
+                } else {
+                    console.log('Skipping code block - already highlighted or Prism not available');
+                }
+            });
+        }
+
+        function formatContentWithCodeBlocks(content) {
+            let formattedContent = content;
+            
+            // Handle complete code blocks
+            formattedContent = formattedContent.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+                const lang = language || 'text';
+                return `<div class="code-block">
+                    <div class="code-header">
+                        <span class="code-language">${lang}</span>
+                        <button class="copy-code-btn" onclick="copyCode(this)" title="Copy code">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <pre><code class="language-${lang}">${escapeHtml(code.trim())}</code></pre>
+                </div>`;
+            });
+            
+            // Handle incomplete/streaming code blocks (opening ``` but no closing ```)
+            formattedContent = formattedContent.replace(/```(\w+)?\n([\s\S]*?)$/g, (match, language, code) => {
+                // Only apply this if it's not already formatted as a complete block
+                if (!formattedContent.includes('</div>')) {
+                    const lang = language || 'text';
+                    return `<div class="code-block">
+                        <div class="code-header">
+                            <span class="code-language">${lang}</span>
+                            <span style="color: #94a3b8; font-size: 0.75rem;">Streaming...</span>
+                        </div>
+                        <pre><code class="language-${lang}">${escapeHtml(code)}</code></pre>
+                    </div>`;
+                }
+                return match;
+            });
+            
+            // Handle inline code (but not if it's inside a code block)
+            if (!formattedContent.includes('<div class="code-block">')) {
+                formattedContent = formattedContent.replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+            } else {
+                // More careful inline code replacement when code blocks are present
+                const parts = formattedContent.split('<div class="code-block">');
+                if (parts.length > 1) {
+                    // Only apply inline code formatting to parts outside code blocks
+                    parts[0] = parts[0].replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+                    formattedContent = parts.join('<div class="code-block">');
+                }
+            }
+            
+            return formattedContent;
+        }
+
+        function finalizeStreamingMessage() {
+            const streamingDiv = document.getElementById('streaming-message');
+            if (streamingDiv) {
+                streamingDiv.id = '';
+                const textElement = streamingDiv.querySelector('.message-text');
+                // Use the raw content (markdown) instead of formatted text content
+                const content = textElement.dataset.raw || textElement.textContent;
+                const message = { role: 'assistant', content, timestamp: new Date().toISOString() };
+                messages.push(message);
+                
+                // Save messages to localStorage (legacy)
+                saveMessagesToStorage();
+                
+                // Save to chat history
+                saveChatToHistory();
+            }
+        }
+
+        function createMessageElement(message) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.role}`;
+            
+            const avatarIcon = message.role === 'user' ? 
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' :
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>';
+            
+            // Use the same markdown formatting for all messages
+            const contentHtml = message.role === 'user' ? 
+                escapeHtml(message.content) : 
+                formatMarkdownContent(message.content);
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-avatar">
+                        ${avatarIcon}
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-text">${contentHtml}</div>
+                    </div>
+                </div>
+            `;
+            
+            return messageDiv;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block');
+            const code = codeBlock.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 6L9 17l-5-5"/></svg>';
+                setTimeout(() => {
+                    button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+                }, 2000);
+            });
+        }
+
+        function clearChat() {
+            // Save current chat to history before clearing
+            if (messages.length > 0) {
+                saveChatToHistory();
+            }
+            
+            // Show model selection modal
+            showModelSelection();
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+            updateThemeIcon(isDark);
+        }
+
+        function updateThemeIcon(isDark) {
+            const icon = document.getElementById('theme-icon');
+            if (isDark) {
+                icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+            } else {
+                icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+            }
+        }
+
+        function updateStatus(text, type) {
+            const statusIndicator = document.getElementById('status-indicator');
+            statusIndicator.textContent = text;
+            statusIndicator.className = `status-indicator status-${type}`;
+        }
+
+        function updateCurrentModelDisplay(modelName) {
+            const display = document.getElementById('current-model-display');
+            if (!display) return;
+            
+            const modelNames = {
+                'Qwen/Qwen2.5-0.5B-Instruct': '🤖 Qwen 2.5 0.5B',
+                'Qwen/Qwen2.5-3B-Instruct': '🤖 Qwen 2.5 3B',
+                'Qwen/Qwen2.5-7B-Instruct': '🤖 Qwen 2.5 7B',
+                'AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct': '🇸🇪 GPT-SW3 6.7B'
+            };
+            
+            const displayName = modelNames[modelName] || modelName;
+            display.textContent = displayName;
+        }
+
+        async function fetchCurrentModel() {
+            try {
+                const response = await fetch('/qwen-api/health', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.current_model) {
+                        updateCurrentModelDisplay(data.current_model);
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not fetch current model:', error);
+            }
+        }
+
+        // Settings functions
+        function showSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = 'flex';
+            
+            // Load current settings
+            document.getElementById('theme-select').value = settings.theme;
+            document.getElementById('font-size').value = settings.fontSize;
+            document.getElementById('max-tokens').value = settings.maxTokens;
+            document.getElementById('top-p').value = settings.topP;
+            document.getElementById('show-timestamps').checked = settings.showTimestamps;
+            document.getElementById('auto-scroll').checked = settings.autoScroll;
+            
+            // Update range value displays
+            updateRangeValue('font-size', 'font-size-value', 'px');
+            updateRangeValue('top-p', 'top-p-value');
+        }
+
+        function hideSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = 'none';
+        }
+
+        // Model selection functions
+        function showModelSelection() {
+            const modal = document.getElementById('model-selection-modal');
+            modal.style.display = 'flex';
+        }
+
+        function hideModelSelection() {
+            const modal = document.getElementById('model-selection-modal');
+            modal.style.display = 'none';
+        }
+
+        async function startNewChatWithModel() {
+            const selectedModel = document.getElementById('new-chat-model-select').value;
+            
+            // Hide modal first
+            hideModelSelection();
+            
+            // Show progress notification
+            const progressNotification = showNotification('🔄 Switching to new model...', 'info', 0, 0);
+            
+            try {
+                // Simulate progress updates with realistic stages
+                let progress = 0;
+                const stages = [
+                    { progress: 10, message: '🔄 Unloading current model...' },
+                    { progress: 25, message: '🔄 Loading new model...' },
+                    { progress: 50, message: '🔄 Initializing model...' },
+                    { progress: 75, message: '🔄 Optimizing for inference...' },
+                    { progress: 90, message: '🔄 Finalizing setup...' }
+                ];
+                
+                let stageIndex = 0;
+                const progressInterval = setInterval(() => {
+                    if (stageIndex < stages.length) {
+                        const stage = stages[stageIndex];
+                        progress = stage.progress;
+                        updateNotificationProgress(progressNotification, progress, stage.message);
+                        stageIndex++;
+                    } else {
+                        progress = Math.min(progress + 2, 90);
+                        updateNotificationProgress(progressNotification, progress, '🔄 Switching to new model...');
+                    }
+                }, 800);
+                
+                // Switch model
+                const response = await fetch('/qwen-api/config/model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ model: selectedModel })
+                });
+                
+                clearInterval(progressInterval);
+                updateNotificationProgress(progressNotification, 100, '✅ Model switched successfully!');
+                
+                const result = await response.json();
+                
+                if (response.ok && result.status === 'success') {
+                    // Update the current model display
+                    updateCurrentModelDisplay(selectedModel);
+                    
+                    // Wait a moment then start new chat
+                    setTimeout(() => {
+                        removeNotification(progressNotification.querySelector('.notification-close'));
+                        startNewChat();
+                    }, 1500);
+                } else {
+                    updateNotificationProgress(progressNotification, 100, `❌ ${result.message || 'Failed to switch model'}`);
+                    setTimeout(() => {
+                        removeNotification(progressNotification.querySelector('.notification-close'));
+                        startNewChat(); // Still start new chat even if model switch failed
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Error switching model:', error);
+                updateNotificationProgress(progressNotification, 100, '❌ Failed to connect to server');
+                setTimeout(() => {
+                    removeNotification(progressNotification.querySelector('.notification-close'));
+                    startNewChat(); // Still start new chat even if model switch failed
+                }, 3000);
+            }
+        }
+
+        function updateRangeValue(inputId, displayId, suffix = '') {
+            const input = document.getElementById(inputId);
+            const display = document.getElementById(displayId);
+            display.textContent = input.value + suffix;
+            
+            input.addEventListener('input', function() {
+                display.textContent = this.value + suffix;
+            });
+        }
+
+        function saveSettings() {
+            settings.theme = document.getElementById('theme-select').value;
+            settings.fontSize = parseInt(document.getElementById('font-size').value);
+            settings.maxTokens = parseInt(document.getElementById('max-tokens').value);
+            settings.topP = parseFloat(document.getElementById('top-p').value);
+            settings.showTimestamps = document.getElementById('show-timestamps').checked;
+            settings.autoScroll = document.getElementById('auto-scroll').checked;
+            
+            // Apply theme immediately
+            applyTheme(settings.theme);
+            
+            // Apply font size immediately
+            document.documentElement.style.fontSize = settings.fontSize + 'px';
+            
+            // Save to localStorage
+            localStorage.setItem('chatSettings', JSON.stringify(settings));
+            
+            showNotification('Settings saved successfully!', 'success');
+            hideSettings();
+        }
+
+        // Notification functions
+        function showNotification(message, type = 'info', duration = 5000, progress = null) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+            
+            let progressHtml = '';
+            if (progress !== null) {
+                progressHtml = `
+                    <div class="notification-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="progress-text">${progress}%</div>
+                    </div>
+                `;
+            }
+            
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <span class="notification-title">${icons[type] || icons.info} ${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                    <button class="notification-close" onclick="removeNotification(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="notification-message">${message}</div>
+                ${progressHtml}
+            `;
+            
+            container.appendChild(notification);
+            
+            // Auto-remove after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    removeNotification(notification.querySelector('.notification-close'));
+                }, duration);
+            }
+            
+            return notification;
+        }
+
+        function updateNotificationProgress(notification, progress, message = null) {
+            if (!notification) return;
+            
+            const progressFill = notification.querySelector('.progress-fill');
+            const progressText = notification.querySelector('.progress-text');
+            const messageDiv = notification.querySelector('.notification-message');
+            
+            if (progressFill) {
+                progressFill.style.width = `${progress}%`;
+            }
+            if (progressText) {
+                progressText.textContent = `${progress}%`;
+            }
+            if (message && messageDiv) {
+                messageDiv.textContent = message;
+            }
+        }
+
+        function removeNotification(closeBtn) {
+            const notification = closeBtn.closest('.notification');
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }
+
+        // Apply theme
+        function applyTheme(theme) {
+            document.body.className = '';
+            if (theme === 'corporate') {
+                document.body.classList.add('theme-corporate');
+            }
+            // Light theme is default (no class needed)
+        }
+
+        // Load settings from localStorage
+        function loadSettings() {
+            const saved = localStorage.getItem('chatSettings');
+            if (saved) {
+                try {
+                    settings = { ...settings, ...JSON.parse(saved) };
+                    // Apply saved settings
+                    applyTheme(settings.theme);
+                    document.documentElement.style.fontSize = settings.fontSize + 'px';
+                } catch (e) {
+                    console.warn('Failed to load settings:', e);
+                }
+            }
+        }
+
+        // Chat persistence functions
+        function saveMessagesToStorage() {
+            try {
+                localStorage.setItem('chatMessages', JSON.stringify(messages));
+            } catch (e) {
+                console.warn('Failed to save messages:', e);
+            }
+        }
+
+        function loadMessagesFromStorage() {
+            try {
+                const saved = localStorage.getItem('chatMessages');
+                if (saved) {
+                    const savedMessages = JSON.parse(saved);
+                    if (Array.isArray(savedMessages) && savedMessages.length > 0) {
+                        messages = savedMessages;
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load messages:', e);
+            }
+            return false;
+        }
+
+        function displaySavedMessages() {
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '';
+            
+            messages.forEach(message => {
+                const messageDiv = createMessageElement(message);
+                messagesContainer.appendChild(messageDiv);
+            });
+            
+            // Force re-highlight all code blocks by removing the prism-highlighted class first
+            setTimeout(() => {
+                const codeBlocks = messagesContainer.querySelectorAll('code[class*="language-"]');
+                console.log('Found code blocks:', codeBlocks.length);
+                codeBlocks.forEach(codeBlock => {
+                    codeBlock.classList.remove('prism-highlighted');
+                    console.log('Code block content:', codeBlock.textContent.substring(0, 100));
+                });
+                highlightCodeBlocks(messagesContainer);
+            }, 100);
+            
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Sidebar and chat history functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('chat-sidebar');
+            const body = document.body;
+            
+            sidebar.classList.toggle('open');
+            body.classList.toggle('sidebar-open');
+        }
+
+        function generateChatId() {
+            return 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function getChatTitle(messages) {
+            if (messages.length === 0) return 'New Chat';
+            
+            // Find first user message
+            const firstUserMessage = messages.find(msg => msg.role === 'user');
+            if (firstUserMessage) {
+                const title = firstUserMessage.content.substring(0, 50);
+                return title.length < firstUserMessage.content.length ? title + '...' : title;
+            }
+            
+            return 'New Chat';
+        }
+
+        function getChatPreview(messages) {
+            if (messages.length === 0) return 'No messages yet';
+            
+            // Find last assistant message
+            const lastAssistantMessage = [...messages].reverse().find(msg => msg.role === 'assistant');
+            if (lastAssistantMessage) {
+                const preview = lastAssistantMessage.content.substring(0, 100);
+                return preview.length < lastAssistantMessage.content.length ? preview + '...' : preview;
+            }
+            
+            return 'No messages yet';
+        }
+
+        function saveChatToHistory() {
+            if (messages.length === 0) return;
+            
+            const chatData = {
+                id: currentChatId || generateChatId(),
+                title: getChatTitle(messages),
+                preview: getChatPreview(messages),
+                messages: [...messages],
+                timestamp: new Date().toISOString(),
+                lastModified: new Date().toISOString()
+            };
+            
+            // Load existing history
+            loadChatHistory();
+            
+            // Update or add chat
+            const existingIndex = chatHistory.findIndex(chat => chat.id === chatData.id);
+            if (existingIndex >= 0) {
+                chatHistory[existingIndex] = chatData;
+            } else {
+                chatHistory.unshift(chatData); // Add to beginning
+            }
+            
+            // Keep only last 50 chats
+            if (chatHistory.length > 50) {
+                chatHistory = chatHistory.slice(0, 50);
+            }
+            
+            // Save to localStorage
+            try {
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            } catch (e) {
+                console.warn('Failed to save chat history:', e);
+            }
+            
+            // Update sidebar
+            updateSidebar();
+        }
+
+        function loadChatHistory() {
+            try {
+                const saved = localStorage.getItem('chatHistory');
+                if (saved) {
+                    chatHistory = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.warn('Failed to load chat history:', e);
+                chatHistory = [];
+            }
+        }
+
+        function updateSidebar() {
+            const sidebarContent = document.getElementById('sidebar-content');
+            
+            if (chatHistory.length === 0) {
+                sidebarContent.innerHTML = '<p style="color: #64748b; text-align: center; margin-top: 2rem;">No chat history yet</p>';
+                return;
+            }
+            
+            sidebarContent.innerHTML = chatHistory.map(chat => {
+                const isActive = chat.id === currentChatId;
+                const timeAgo = getTimeAgo(chat.lastModified);
+                
+                return `
+                    <div class="chat-history-item ${isActive ? 'active' : ''}" onclick="loadChat('${chat.id}')">
+                        <button class="chat-delete-btn" onclick="event.stopPropagation(); deleteChat('${chat.id}')" title="Delete chat">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3,6 5,6 21,6"/>
+                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                                <line x1="10" y1="11" x2="10" y2="17"/>
+                                <line x1="14" y1="11" x2="14" y2="17"/>
+                            </svg>
+                        </button>
+                        <div class="chat-history-title">${escapeHtml(chat.title)}</div>
+                        <div class="chat-history-preview">${escapeHtml(chat.preview)}</div>
+                        <div class="chat-history-time">${timeAgo}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadChat(chatId) {
+            const chat = chatHistory.find(c => c.id === chatId);
+            if (!chat) return;
+            
+            // Save current chat if it has messages
+            if (messages.length > 0 && currentChatId) {
+                saveChatToHistory();
+            }
+            
+            // Load the selected chat
+            messages = [...chat.messages];
+            currentChatId = chatId;
+            
+            // Update display with syntax highlighting
+            displaySavedMessages();
+            
+            // Update sidebar
+            updateSidebar();
+            
+            // Close sidebar
+            toggleSidebar();
+        }
+
+        function startNewChat() {
+            // Save current chat if it has messages
+            if (messages.length > 0 && currentChatId) {
+                saveChatToHistory();
+            }
+            
+            // Clear current chat
+            messages = [];
+            currentChatId = generateChatId();
+            
+            // Reset display with welcome message
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-content">
+                        <div class="message-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                <path d="M2 17l10 5 10-5"/>
+                                <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="message-bubble">
+                            <p class="message-text">Hello! I'm your AI assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Clear input field
+            const inputField = document.getElementById('message-input');
+            if (inputField) {
+                inputField.value = '';
+                inputField.style.height = 'auto';
+            }
+            
+            // Update sidebar
+            updateSidebar();
+            
+            // Scroll to top
+            messagesContainer.scrollTop = 0;
+        }
+
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffMs = now - time;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            
+            return time.toLocaleDateString();
+        }
+
+        function deleteChat(chatId) {
+            if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+                // Remove from chat history
+                chatHistory = chatHistory.filter(chat => chat.id !== chatId);
+                
+                // Save updated history
+                try {
+                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                } catch (e) {
+                    console.warn('Failed to save chat history:', e);
+                }
+                
+                // If this was the current chat, start a new one
+                if (currentChatId === chatId) {
+                    startNewChat();
+                }
+                
+                // Update sidebar
+                updateSidebar();
+                
+                showNotification('Chat deleted successfully', 'success');
+            }
+        }
+    </script>
+    
+    <!-- Prism.js Syntax Highlighting -->
+    <script src="prism.min.js"></script>
+    <script src="prism-python.min.js"></script>
+    <script src="prism-javascript.min.js"></script>
+    <script src="prism-java.min.js"></script>
+    <script src="prism-css.min.js"></script>
+    <script src="prism-bash.min.js"></script>
+    <script src="prism-go.min.js"></script>
+    <script src="prism-markup.min.js"></script>
+    <script src="prism-nginx.min.js"></script>
+    <script src="prism-fish.min.js"></script>
+    <script src="prism-jinja2.min.js"></script>
+</body>
+</html>

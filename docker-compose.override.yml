@@ -1,0 +1,33 @@
+# Override file for development/local customization
+# This file is automatically loaded by docker-compose
+
+version: '3.8'
+
+services:
+  qwen-chat:
+    # Override environment variables for local development
+    environment:
+      - MODEL_NAME=Qwen/Qwen2.5-0.5B-Instruct
+      - MAX_MEMORY_GB=8
+      - DEVICE=cpu  # Use CPU for development
+    
+    # Override ports for local development
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    
+    # Override volumes for local development
+    volumes:
+      - ./model_config.json:/app/model_config.json
+      - ./simple-frontend.html:/app/simple-frontend.html
+      - ./simple-server.py:/app/simple-server.py
+      - ./prism-*.js:/app/
+      - ./prism-*.css:/app/
+    
+    # Override resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G

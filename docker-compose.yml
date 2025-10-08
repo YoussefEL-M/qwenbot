@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  qwen-chat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Uncomment the following lines to use CPU-only version
+      # target: torch-cpu
+    container_name: qwen-chat
+    restart: unless-stopped
+    
+    # Ports
+    ports:
+      - "8000:8000"  # Backend API
+      - "3000:3000"  # Frontend
+    
+    # Environment variables
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODEL_NAME=${MODEL_NAME:-Qwen/Qwen2.5-0.5B-Instruct}
+      - MAX_MEMORY_GB=${MAX_MEMORY_GB:-12}
+      - DEVICE=${DEVICE:-auto}
+      - HUGGINGFACE_HUB_CACHE=/app/model_cache
+      - TRANSFORMERS_CACHE=/app/model_cache
+    
+    # Volumes for persistent storage
+    volumes:
+      - qwen_model_cache:/app/model_cache
+      - qwen_offload_cache:/app/offload_cache
+      - qwen_logs:/app/logs
+      - ./model_config.json:/app/model_config.json:ro
+      - ./simple-frontend.html:/app/simple-frontend.html:ro
+      - ./simple-server.py:/app/simple-server.py:ro
+      - ./prism-*.js:/app/:ro
+      - ./prism-*.css:/app/:ro
+    
+    # GPU support (uncomment if you have NVIDIA GPU)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    
+    # Alternative GPU support for Podman
+    # devices:
+    #   - /dev/nvidia0:/dev/nvidia0
+    #   - /dev/nvidiactl:/dev/nvidiactl
+    #   - /dev/nvidia-uvm:/dev/nvidia-uvm
+    
+    # Resource limits (adjust based on your system)
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          memory: 8G
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volumes for persistent storage
+volumes:
+  qwen_model_cache:
+    driver: local
+  qwen_offload_cache:
+    driver: local
+  qwen_logs:
+    driver: local

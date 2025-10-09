@@ -32,7 +32,7 @@ FROM base as torch-cpu
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 # Stage 4: Main application
-FROM torch-cuda as main
+FROM torch-cpu as main
 
 # Set working directory
 WORKDIR /app
@@ -53,20 +53,23 @@ RUN pip install --no-cache-dir \
 RUN mkdir -p /app/model_cache /app/offload_cache /app/logs
 
 # Copy application files
-COPY backend/ /app/backend/
+COPY backend/app.py /app/
 COPY simple-server.py /app/
 COPY simple-frontend.html /app/
 COPY model_config.json /app/
 COPY *.js /app/
 COPY *.css /app/
 
+# Create non-root user for security
+RUN useradd -m -u 1000 qwen
+
 # Copy entrypoint script
 COPY docker-entrypoint.sh /app/
-RUN chmod +x /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh && \
+    chown qwen:qwen /app/docker-entrypoint.sh
 
-# Create non-root user for security
-RUN useradd -m -u 1000 qwen && \
-    chown -R qwen:qwen /app
+# Change ownership of all files
+RUN chown -R qwen:qwen /app
 USER qwen
 
 # Expose ports
@@ -76,8 +79,5 @@ EXPOSE 8000 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Set entrypoint
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-
-# Default command
-CMD ["start"]
+# Default command - start both services
+CMD ["/bin/bash", "-c", "cd /app && python app.py & python simple-server.py & wait"]

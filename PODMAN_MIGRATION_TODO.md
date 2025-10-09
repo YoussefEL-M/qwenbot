@@ -1,76 +1,235 @@
-# Podman Migration Todo List
+# 🐳 Podman Migration Todo List
 
-## Overview
-Migration from Docker to Podman for the Qwen Chat System, addressing build context issues and ensuring full compatibility.
+This document outlines the tasks needed to migrate the Qwen Chat System from Docker to Podman for better security, rootless operation, and systemd integration.
 
-## Tasks
+## 📋 Migration Tasks
 
-### 1. Create Podman-specific docker-compose.yml
-- [ ] Create `docker-compose.podman.yml` with proper device mapping
-- [ ] Configure volume mounts for Podman compatibility
-- [ ] Update GPU device mapping for Podman (`/dev/nvidia0` etc.)
-- [ ] Test volume persistence with Podman
+### 🔧 **1. Podman Installation & Setup**
+- [ ] Install Podman on the target system
+  ```bash
+  # Ubuntu/Debian
+  sudo apt update && sudo apt install podman
+  
+  # CentOS/RHEL/Fedora
+  sudo dnf install podman
+  
+  # Or use the official installation script
+  curl -s https://raw.githubusercontent.com/containers/podman/main/install.sh | bash
+  ```
+- [ ] Install Podman Compose
+  ```bash
+  # Install podman-compose
+  pip install podman-compose
+  
+  # Or use the standalone binary
+  curl -L https://github.com/containers/podman-compose/releases/latest/download/podman-compose-linux-amd64 -o /usr/local/bin/podman-compose
+  chmod +x /usr/local/bin/podman-compose
+  ```
+- [ ] Configure Podman for rootless operation
+  ```bash
+  # Enable user namespaces
+  echo 'kernel.unprivileged_userns_clone=1' | sudo tee -a /etc/sysctl.conf
+  
+  # Configure subuid/subgid
+  sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER
+  ```
+- [ ] Test Podman installation
+  ```bash
+  podman --version
+  podman-compose --version
+  podman info
+  ```
 
-### 2. Update Dockerfile for Podman compatibility
-- [ ] Remove Docker-specific optimizations
-- [ ] Ensure multi-stage builds work with Podman
-- [ ] Test build process with Podman
-- [ ] Verify security context and user permissions
+### 🐳 **2. Container Configuration Updates**
+- [ ] Update `docker-compose.yml` for Podman compatibility
+  - [ ] Remove Docker-specific features
+  - [ ] Update volume mounting syntax
+  - [ ] Adjust resource limits for Podman
+  - [ ] Update health check commands
+- [ ] Create `podman-compose.yml` (alternative to modifying existing file)
+  - [ ] Copy from `docker-compose.yml`
+  - [ ] Update for Podman-specific features
+  - [ ] Add Podman-specific configurations
+- [ ] Update `Dockerfile` for Podman compatibility
+  - [ ] Ensure all commands work with Podman
+  - [ ] Test multi-stage builds
+  - [ ] Verify user creation and permissions
 
-### 3. Create start-podman.sh script
-- [ ] Create Podman-specific startup script
-- [ ] Implement Podman compose detection (`podman-compose` vs `podman compose`)
-- [ ] Add Podman-specific error handling
-- [ ] Include GPU support detection for Podman
+### 🔄 **3. Script Updates**
+- [ ] Update `start-docker.sh` to detect and use Podman
+  - [ ] Add Podman detection logic
+  - [ ] Update compose command selection
+  - [ ] Add Podman-specific error handling
+  - [ ] Test all script options with Podman
+- [ ] Create `start-podman.sh` (dedicated Podman script)
+  - [ ] Optimized for Podman features
+  - [ ] Include Podman-specific commands
+  - [ ] Add rootless operation support
+- [ ] Update `switch-model.sh` for Podman
+  - [ ] Test model switching with Podman containers
+  - [ ] Update container management commands
+- [ ] Update `complete-restart.sh` for Podman
+  - [ ] Replace Docker commands with Podman equivalents
+  - [ ] Test restart functionality
 
-### 4. Test GPU support with Podman
-- [ ] Install and configure nvidia-container-toolkit for Podman
-- [ ] Test GPU device mapping in containers
-- [ ] Verify CUDA functionality with Podman
-- [ ] Test memory allocation and GPU monitoring
+### 🔐 **4. Security & Permissions**
+- [ ] Configure rootless operation
+  - [ ] Test running containers as non-root user
+  - [ ] Verify file permissions work correctly
+  - [ ] Test volume mounting in rootless mode
+- [ ] Update volume permissions
+  - [ ] Ensure model cache is accessible
+  - [ ] Fix log file permissions
+  - [ ] Test persistent storage
+- [ ] Configure SELinux/AppArmor (if applicable)
+  - [ ] Test with security policies enabled
+  - [ ] Update policies if needed
 
-### 5. Update health checks and logging
-- [ ] Modify health check commands for Podman
+### 🚀 **5. GPU Support**
+- [ ] Test NVIDIA GPU support with Podman
+  - [ ] Install `nvidia-container-toolkit` for Podman
+  - [ ] Configure GPU access in rootless mode
+  - [ ] Test CUDA functionality
+- [ ] Update GPU configuration in compose files
+  - [ ] Use Podman-compatible GPU syntax
+  - [ ] Test with different GPU configurations
+- [ ] Create GPU-specific Podman compose file
+  - [ ] Separate configuration for GPU-enabled systems
+  - [ ] Include necessary device mappings
+
+### 📊 **6. Monitoring & Logging**
 - [ ] Update logging configuration for Podman
-- [ ] Test log rotation with Podman
-- [ ] Ensure proper log file permissions
+  - [ ] Test log collection and rotation
+  - [ ] Verify log file permissions
+- [ ] Update health check endpoints
+  - [ ] Test health checks with Podman
+  - [ ] Update monitoring scripts
+- [ ] Create Podman-specific monitoring tools
+  - [ ] Container status monitoring
+  - [ ] Resource usage tracking
 
-### 6. Create Podman-specific documentation
-- [ ] Write Podman installation guide
-- [ ] Create troubleshooting section for Podman
-- [ ] Document Podman-specific commands
-- [ ] Add Podman vs Docker comparison
+### 🧪 **7. Testing & Validation**
+- [ ] Test all models with Podman
+  - [ ] Qwen 2.5 0.5B, 3B, 7B
+  - [ ] Llama 3 8B
+  - [ ] Gemma 2 9B
+  - [ ] GPT-SW3 6.7B
+- [ ] Test model switching functionality
+  - [ ] Dynamic model loading
+  - [ ] Memory management
+  - [ ] Error handling
+- [ ] Test WebSocket functionality
+  - [ ] Real-time streaming
+  - [ ] Connection management
+  - [ ] Error recovery
+- [ ] Performance testing
+  - [ ] Compare performance with Docker
+  - [ ] Memory usage analysis
+  - [ ] Startup time comparison
 
-### 7. Test model switching functionality
-- [ ] Verify dynamic model loading with Podman
-- [ ] Test model unloading and memory cleanup
-- [ ] Ensure model cache persistence
-- [ ] Test model switching via API and web interface
+### 📚 **8. Documentation Updates**
+- [ ] Update README.md with Podman instructions
+  - [ ] Add Podman installation guide
+  - [ ] Update usage examples
+  - [ ] Add troubleshooting section
+- [ ] Create Podman-specific documentation
+  - [ ] Podman setup guide
+  - [ ] Rootless operation guide
+  - [ ] GPU configuration guide
+- [ ] Update API documentation
+  - [ ] Add Podman-specific endpoints
+  - [ ] Update management commands
 
-### 8. Optimize build context size
-- [ ] **CRITICAL**: Address 60GB+ build context issue
-- [ ] Create `.dockerignore` to exclude model cache
-- [ ] Implement model download in container startup
-- [ ] Test build time improvements
-- [ ] Verify model cache mounting works correctly
+### 🔧 **9. Advanced Features**
+- [ ] Systemd integration
+  - [ ] Create systemd service files
+  - [ ] Enable auto-start on boot
+  - [ ] Configure service dependencies
+- [ ] Podman pods support
+  - [ ] Group related containers
+  - [ ] Shared networking
+  - [ ] Resource sharing
+- [ ] Image management
+  - [ ] Build and push images
+  - [ ] Image registry integration
+  - [ ] Image signing and verification
 
-## Priority Order
-1. **Task 8** (Build context optimization) - Most critical for usability
-2. **Task 1** (Podman compose config) - Core functionality
-3. **Task 3** (Startup script) - User experience
-4. **Task 4** (GPU support) - Performance
-5. **Tasks 2, 5, 6, 7** - Polish and testing
+### 🚨 **10. Error Handling & Recovery**
+- [ ] Update error messages for Podman
+  - [ ] Podman-specific error detection
+  - [ ] Better error reporting
+  - [ ] Recovery suggestions
+- [ ] Create fallback mechanisms
+  - [ ] Docker fallback if Podman fails
+  - [ ] Graceful degradation
+  - [ ] Automatic recovery
+- [ ] Update troubleshooting guide
+  - [ ] Common Podman issues
+  - [ ] Rootless operation problems
+  - [ ] GPU access issues
 
-## Notes
-- Current build context is 60GB+ due to model cache inclusion
-- Podman has different device mapping requirements than Docker
-- Need to test both `podman-compose` and `podman compose` commands
-- GPU support requires nvidia-container-toolkit installation
-- Model switching is critical feature that must work with Podman
+## 🎯 **Priority Levels**
 
-## Success Criteria
-- [ ] Build context under 1GB
-- [ ] All Docker functionality works with Podman
-- [ ] GPU acceleration works with Podman
-- [ ] Model switching works seamlessly
-- [ ] Complete documentation for Podman usage
+### **High Priority** (Must Complete)
+1. Podman installation and basic setup
+2. Container configuration updates
+3. Script updates for Podman detection
+4. Basic functionality testing
+
+### **Medium Priority** (Should Complete)
+1. Security and permissions configuration
+2. GPU support testing
+3. Model switching functionality
+4. Documentation updates
+
+### **Low Priority** (Nice to Have)
+1. Advanced features (systemd, pods)
+2. Performance optimizations
+3. Advanced monitoring
+4. Image management
+
+## 🧪 **Testing Checklist**
+
+### **Basic Functionality**
+- [ ] Podman installation works
+- [ ] Containers start successfully
+- [ ] Frontend is accessible
+- [ ] Backend API responds
+- [ ] Health checks pass
+
+### **Model Operations**
+- [ ] Models load correctly
+- [ ] Model switching works
+- [ ] Memory management functions
+- [ ] GPU acceleration works (if available)
+
+### **Advanced Features**
+- [ ] WebSocket streaming works
+- [ ] File serving works
+- [ ] Logging functions correctly
+- [ ] Volume persistence works
+
+### **Error Scenarios**
+- [ ] Out of memory handling
+- [ ] Network connectivity issues
+- [ ] Container restart scenarios
+- [ ] Model loading failures
+
+## 📝 **Notes**
+
+- **Rootless Operation**: Podman's main advantage is rootless operation, which improves security
+- **Compatibility**: Most Docker commands have Podman equivalents
+- **Performance**: Podman may have slightly different performance characteristics
+- **GPU Support**: Requires additional setup for NVIDIA GPU support
+- **Volumes**: Podman handles volumes differently, especially in rootless mode
+
+## 🔗 **Useful Resources**
+
+- [Podman Documentation](https://docs.podman.io/)
+- [Podman Compose](https://github.com/containers/podman-compose)
+- [Rootless Podman Guide](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md)
+- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+
+---
+
+**Estimated Completion Time**: 2-3 days for basic functionality, 1-2 weeks for full feature parity with Docker.

@@ -39,7 +39,7 @@ import json
 def load_model_config():
     """Load model configuration from file or use default"""
     try:
-        with open('../model_config.json', 'r') as f:
+        with open('model_config.json', 'r') as f:
             config = json.load(f)
             return config.get('model', 'Qwen/Qwen2.5-3B-Instruct')
     except FileNotFoundError:
@@ -47,7 +47,7 @@ def load_model_config():
 
 MODEL_NAME = load_model_config()
 MAX_MEMORY_GB = 12  # Minimal memory requirement
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = os.getenv("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
 
 app = FastAPI(title="Qwen 2.5 Chat API", version="1.0.0")
 
@@ -156,18 +156,33 @@ def load_model_dynamic(model_name: str):
             cache_dir="./model_cache"
         )
         
-        # Configure model loading for 12GB VRAM with optimizations
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16,  # Use FP16 for memory efficiency
-            device_map="auto",
-            trust_remote_code=True,
-            cache_dir="./model_cache",
-            low_cpu_mem_usage=True,
-            max_memory={0: "10GB"},  # Reserve memory for other processes
-            # Add optimizations for faster loading
-            use_safetensors=True,  # Use safetensors if available
-        )
+        # Configure model loading based on device
+        if DEVICE == "cpu":
+            # CPU-only configuration
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                torch_dtype=torch.float32,  # Use FP32 for CPU
+                trust_remote_code=True,
+                cache_dir="./model_cache",
+                low_cpu_mem_usage=True,
+                use_safetensors=True,  # Use safetensors if available
+            )
+        else:
+            # GPU configuration for 12GB VRAM with optimizations
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                torch_dtype=torch.float16,  # Use FP16 for memory efficiency
+                device_map="auto",
+                trust_remote_code=True,
+                cache_dir="./model_cache",
+                low_cpu_mem_usage=True,
+                max_memory={0: "10GB"},  # Reserve memory for other processes
+                # Add optimizations for faster loading
+                use_safetensors=True,  # Use safetensors if available
+            )
+        
+        # Move model to correct device
+        model = model.to(DEVICE)
         
         # Optimize model for inference
         model.eval()
@@ -352,7 +367,7 @@ async def update_model_config(request: dict):
         
         # Save configuration to file
         config = {"model": new_model}
-        with open('../model_config.json', 'w') as f:
+        with open('model_config.json', 'w') as f:
             json.dump(config, f)
         
         logger.info(f"Model configuration updated to: {new_model}")

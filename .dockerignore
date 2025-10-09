@@ -47,6 +47,8 @@ logs/
 # Model cache (will be mounted as volume)
 model_cache/
 offload_cache/
+backend/model_cache/
+backend/offload_cache/
 
 # Temporary files
 *.tmp

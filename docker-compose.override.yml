@@ -13,16 +13,16 @@ services:
     
     # Override ports for local development
     ports:
-      - "8000:8000"
-      - "3000:3000"
+      - "8004:8000"  # Backend API (mapped to 8004 to avoid conflict)
+      - "3001:3000"  # Frontend (mapped to 3001 to avoid conflict)
     
     # Override volumes for local development
     volumes:
       - ./model_config.json:/app/model_config.json
       - ./simple-frontend.html:/app/simple-frontend.html
       - ./simple-server.py:/app/simple-server.py
-      - ./prism-*.js:/app/
-      - ./prism-*.css:/app/
+      - ./prism-*.js:/app/static/
+      - ./prism-*.css:/app/static/
     
     # Override resource limits for development
     deploy:
